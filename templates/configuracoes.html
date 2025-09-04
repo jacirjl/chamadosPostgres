@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurações de Prazos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-3 text-center">Configurar Prazos e Fluxo de Trabalho</h2>
+            <form action="{{ url_for('gerenciar_configuracoes') }}" method="POST">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Prazos para Cores dos Chamados</h5>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="prazo_amarelo" class="form-label fw-bold">
+                                <i class="fas fa-circle text-warning"></i> Amarelo (Atenção)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">Chamado aberto há mais de</span>
+                                <input type="number" class="form-control" id="prazo_amarelo" name="prazo_amarelo"
+                                       value="{{ configs.get('prazo_amarelo', 5) }}" min="1" required>
+                                <span class="input-group-text">dias</span>
+                            </div>
+                            <div class="form-text">
+                                Chamados com idade maior que este valor (e menor que o vermelho) ficarão amarelos.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="prazo_vermelho" class="form-label fw-bold">
+                                <i class="fas fa-circle text-danger"></i> Vermelho (Urgente)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">Chamado aberto há mais de</span>
+                                <input type="number" class="form-control" id="prazo_vermelho" name="prazo_vermelho"
+                                       value="{{ configs.get('prazo_vermelho', 10) }}" min="1" required>
+                                <span class="input-group-text">dias</span>
+                            </div>
+                             <div class="form-text">
+                                Chamados com idade maior que este valor ficarão vermelhos.
+                            </div>
+                        </div>
+
+                        <h5 class="card-title mt-4">Reabertura de Chamados</h5>
+                        <hr>
+
+                        <div class="mb-4">
+                            <label for="prazo_reabrir" class="form-label fw-bold">
+                                <i class="fas fa-history text-info"></i> Prazo para Reabrir Chamado
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">Permitir reabertura por</span>
+                                <input type="number" class="form-control" id="prazo_reabrir" name="prazo_reabrir"
+                                       value="{{ configs.get('prazo_reabrir', 3) }}" min="1" required>
+                                <span class="input-group-text">dias após ser resolvido</span>
+                            </div>
+                             <div class="form-text">
+                                Após este prazo, o chamado mudará para "Encerrado" e não poderá mais ser reaberto.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Fluxo de Trabalho (Status)</h5>
+                        <p class="text-muted card-subtitle mb-2">Defina quais status serão usados em ações automáticas do sistema.</p>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="status_capturado_id" class="form-label fw-bold">Status para chamados "Capturados"</label>
+                            <select name="status_capturado_id" id="status_capturado_id" class="form-select" required>
+                                <option value="">-- Selecione um status --</option>
+                                {% for status in status_atendimento_options %}
+                                    <option value="{{ status.id }}" {% if status.id|string == configs.get('status_capturado_id') %}selected{% endif %}>
+                                        {{ status.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Este é o status que um chamado recebe quando um admin o captura. (Recomendado: "Em Andamento")</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status_expirado_id" class="form-label fw-bold">Status para chamados "Expirados"</label>
+                            <select name="status_expirado_id" id="status_expirado_id" class="form-select" required>
+                                <option value="">-- Selecione um status --</option>
+                                {% for status in status_finais_options %}
+                                     <option value="{{ status.id }}" {% if status.id|string == configs.get('status_expirado_id') %}selected{% endif %}>
+                                        {{ status.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Quando o prazo de reabertura de um chamado resolvido expira, ele é movido para este status. (Recomendado: "Encerrado")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-4">
+                    <i class="fas fa-save me-2"></i>Salvar Todas as Configurações
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

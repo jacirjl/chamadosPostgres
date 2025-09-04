@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block title %}Gerenciar Usuários{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <div class="page-header">
+        <h2 class="mb-0">Gerenciar Usuários</h2>
+        <div class="header-actions">
+            <form action="{{ url_for('admin_index') }}" method="get" class="search-form">
+                <input type="text" name="search" class="form-control" placeholder="Buscar por nome, e-mail..." value="{{ search_query or '' }}">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+            </form>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-plus me-2"></i>Adicionar Usuário
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive mt-4">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Responsável</th>
+                    <th>E-mail</th>
+                    <th>Município</th>
+                    <th>Telefone</th>
+                    <th>Admin?</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.responsavel }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.municipio }}</td>
+                    <td>{{ user.telefone }}</td>
+                    <td>{% if user.is_admin %}Sim{% else %}Não{% endif %}</td>
+                    <td class="text-center action-buttons">
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-edit"></i></a>
+                        
+                        <form action="{{ url_for('reset_password', user_id=user.id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Redefinir Senha" onclick="return confirm('Tem certeza que deseja redefinir a senha deste usuário para o padrão?')"><i class="fas fa-key"></i></button>
+                        </form>
+
+                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este usuário?')"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Nenhum usuário encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Adicionar Novo Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('add_user') }}" method="post">
+                    <div class="mb-3">
+                        <label for="responsavel" class="form-label">Responsável</label>
+                        <input type="text" name="responsavel" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="municipio" class="form-label">Município</label>
+                        <input type="text" name="municipio" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="text" name="telefone" class="form-control" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_admin" class="form-check-input" id="isAdminCheck">
+                        <label class="form-check-label" for="isAdminCheck">É Administrador</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="must_reset_password" class="form-check-input" id="resetPasswordCheck" checked>
+                        <label class="form-check-label" for="resetPasswordCheck">Forçar Redefinição de Senha</label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Usuário</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .content-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 25px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+    .page-header h2 {
+        margin: 0;
+    }
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .search-form {
+        display: flex;
+    }
+    .search-form input {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .search-form button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    .table {
+        font-size: 0.9rem;
+    }
+    .table thead th {
+        background-color: #f8f9fa;
+    }
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+    }
+</style>
+{% endblock %}

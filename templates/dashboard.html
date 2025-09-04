@@ -1,0 +1,258 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="page-header">
+        <h2 class="mb-0">Dashboard</h2>
+        <div class="current-date">
+            <i class="far fa-calendar-alt me-2"></i>
+            <span id="current-date-span"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg col-md-6 mb-4">
+            <div class="kpi-card card-total h-100">
+                <div class="card-body">
+                    <i class="fas fa-ticket-alt kpi-icon"></i>
+                    <div class="kpi-value">{{ kpis.get('Total', 0) }}</div>
+                    <div class="kpi-label">Total de Chamados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 mb-4">
+            <div class="kpi-card card-aberto h-100">
+                <div class="card-body">
+                    <i class="fas fa-folder-open kpi-icon"></i>
+                    <div class="kpi-value">{{ kpis.get('Aberto', 0) }}</div>
+                    <div class="kpi-label">Abertos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg col-md-6 mb-4">
+            <div class="kpi-card card-andamento h-100">
+                <div class="card-body">
+                    <i class="fas fa-cogs kpi-icon"></i>
+                    <div class="kpi-value">{{ kpis.get('Em Atendimento', 0) }}</div>
+                    <div class="kpi-label">Em Atendimento</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg col-md-6 mb-4">
+            <div class="kpi-card card-finalizado h-100">
+                <div class="card-body">
+                    <i class="fas fa-check-circle kpi-icon"></i>
+                    <div class="kpi-value">{{ kpis.get('Finalizado', 0) }}</div>
+                    <div class="kpi-label">Finalizados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 mb-4">
+            <div class="kpi-card card-outros h-100">
+                <div class="card-body">
+                    <i class="fas fa-info-circle kpi-icon"></i>
+                    <div class="kpi-value">{{ kpis.get('Outros', 0) }}</div>
+                    <div class="kpi-label">Outros</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Chamados por Tipo de Problema</h5>
+                <canvas id="tipoProblemaChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-5 mb-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Chamados por Status</h5>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="recent-activity-container">
+                <h5 class="chart-title">Últimos Chamados Registrados</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Data</th>
+                                <th>Solicitante</th>
+                                <th>Município</th>
+                                <th>Status</th>
+                                <th>Tipo de Problema</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for chamado in ultimos_chamados %}
+                            <tr>
+                                <td>{{ chamado.id }}</td>
+                                <td>{{ chamado.timestamp }}</td>
+                                <td>{{ chamado.solicitante_email }}</td>
+                                <td>{{ chamado.municipio }}</td>
+                                <td><span class="badge rounded-pill bg-primary">{{ chamado.status_nome }}</span></td>
+                                <td>{{ chamado.tipo_problema_nome }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">Nenhum chamado recente.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateSpan = document.getElementById('current-date-span');
+    const today = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    dateSpan.textContent = today.toLocaleDateString('pt-BR', options);
+
+    const statusIds = {{ status_ids|tojson|safe }};
+    const tipoProblemaIds = {{ tipo_ids|tojson|safe }};
+
+    function changeCursor(event, chartElement) {
+        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+    }
+
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ status_labels|tojson|safe }},
+            datasets: [{
+                label: 'Chamados por Status',
+                data: {{ status_values|tojson|safe }},
+                backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#dc3545', '#fd7e14', '#20c997'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            onClick: (evt, elements) => {
+                if (elements.length > 0) {
+                    const clickedIndex = elements[0].index;
+                    const statusId = statusIds[clickedIndex];
+
+                    if (statusId === 'finalizados') {
+                        window.location.href = `{{ url_for('meus_chamados') }}?status_group=finalizados`;
+                    } else if (statusId) {
+                        window.location.href = `{{ url_for('meus_chamados') }}?status=${statusId}`;
+                    }
+                }
+            },
+            onHover: changeCursor
+        }
+    });
+
+    const tipoCtx = document.getElementById('tipoProblemaChart').getContext('2d');
+    new Chart(tipoCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ tipo_labels|tojson|safe }},
+            datasets: [{
+                label: 'Nº de Chamados',
+                data: {{ tipo_values|tojson|safe }},
+                backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
+            },
+            onClick: (evt, elements) => {
+                if (elements.length > 0) {
+                    const clickedIndex = elements[0].index;
+                    const tipoProblemaId = tipoProblemaIds[clickedIndex];
+                    if (tipoProblemaId) {
+                        window.location.href = `{{ url_for('meus_chamados') }}?tipo_problema=${tipoProblemaId}`;
+                    }
+                }
+            },
+            onHover: changeCursor
+        }
+    });
+});
+</script>
+
+<style>
+    body { background-color: #f0f2f5; }
+    .dashboard-container { max-width: 1400px; margin: 20px auto; }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 10px 25px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+    }
+    .page-header h2 { margin: 0; color: #333; }
+    .current-date { font-size: 0.9rem; color: #6c757d; }
+    .kpi-card {
+        border-radius: 8px;
+        color: #fff;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+    .kpi-card:hover { transform: translateY(-5px); }
+    .kpi-card .card-body { position: relative; padding: 25px; text-align: right; }
+    .kpi-icon {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+    .kpi-value { font-size: 2.2rem; font-weight: 700; }
+    .kpi-label { font-size: 0.9rem; text-transform: uppercase; }
+    .card-total { background: linear-gradient(45deg, #4e73df, #224abe); }
+    .card-aberto { background: linear-gradient(45deg, #f6c23e, #dda20a); }
+    .card-andamento { background: linear-gradient(45deg, #36b9cc, #2a96a5); }
+    .card-finalizado { background: linear-gradient(45deg, #1cc88a, #13855c); }
+    .card-outros { background: linear-gradient(45deg, #6c757d, #5a6268); }
+    .chart-container, .recent-activity-container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        height: 100%;
+    }
+    .chart-title { margin-bottom: 15px; font-weight: 600; color: #333; }
+    #tipoProblemaChart, #statusChart { max-height: 350px; }
+</style>
+{% endblock %}

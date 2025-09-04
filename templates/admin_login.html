@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Login do Administrador</title>
+    <!-- Usando o mesmo estilo do admin.html para consistência -->
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh;}
+        .container { max-width: 400px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 1em; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; background: #007bff; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .flash { padding: 1em; margin-bottom: 1em; border-radius: 4px; text-align: center; }
+        .flash.danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Painel de Administração</h1>
+        <!-- Mensagens de Feedback -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="post">
+            <input type="email" name="email" placeholder="E-mail de Administrador" required>
+            <input type="password" name="password" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+</body>
+</html>

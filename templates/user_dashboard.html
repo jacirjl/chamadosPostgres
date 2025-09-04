@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+
+{% block title %}Página Inicial{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="text-center mb-5">
+        <h2 class="display-6">Bem-vindo(a), {{ user.responsavel.split()[0] }}!</h2>
+        <p class="lead text-muted">Selecione uma das opções abaixo para começar.</p>
+    </div>
+
+    <div class="row text-center">
+        <div class="col-md-5 mx-auto mb-4">
+            <div class="card h-100 shadow-sm custom-card">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="icon-circle bg-primary text-white mx-auto mb-3">
+                        <i class="fas fa-plus-circle fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Abrir Novo Chamado</h5>
+                    <p class="card-text text-muted">Registre uma nova solicitação de suporte para seus equipamentos.</p>
+                    <a href="{{ url_for('abrir_chamado') }}" class="btn btn-primary mt-auto stretched-link">Iniciar Abertura</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5 mx-auto mb-4">
+            <div class="card h-100 shadow-sm custom-card">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="icon-circle bg-secondary text-white mx-auto mb-3">
+                        <i class="fas fa-ticket-alt fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Meus Chamados</h5>
+                    <p class="card-text text-muted">Acompanhe o andamento dos seus chamados abertos e resolvidos.</p>
+                    <a href="{{ url_for('meus_chamados') }}" class="btn btn-outline-secondary mt-auto stretched-link">Ver Meus Chamados</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    Resumo Rápido
+                </div>
+                <div class="card-body text-center">
+                    <div class="row">
+                        <div class="col-6 border-end">
+                            <h4 class="mb-0">{{ kpis.get('abertos', 0) }}</h4>
+                            <small class="text-muted">Chamados em Aberto</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ kpis.get('finalizados', 0) }}</h4>
+                            <small class="text-muted">Chamados Finalizados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .custom-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .custom-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .icon-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}

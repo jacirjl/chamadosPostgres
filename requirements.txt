@@ -1,0 +1,6 @@
+sqlalchemy
+Flask
+Werkzeug
+gunicorn
+pandas
+openpyxl

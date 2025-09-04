@@ -1,0 +1,446 @@
+{% extends "layout.html" %}
+
+{% block title %}Meus Chamados{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+    <div class="page-header">
+        <h2 class="section-title mb-0">Painel de Chamados</h2>
+        <form method="get" class="filter-form" action="{{ url_for('meus_chamados') }}">
+            <div class="filter-group">
+                <label for="statusFilter" class="form-label">Filtrar por Status:</label>
+                <select name="status" id="statusFilter" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Todos Status --</option>
+                    {% for status in status_options %}
+                        <option value="{{ status.id }}" {% if status.id == status_filter_id %}selected{% endif %}>
+                            {{ status.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="municipioFilter" class="form-label">Filtrar por Município:</label>
+                <select name="municipio" id="municipioFilter" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Todos Municípios --</option>
+                    {% for m in municipios_options %}
+                        <option value="{{ m.municipio }}" {% if m.municipio == municipio_filter %}selected{% endif %}>
+                            {{ m.municipio }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    {% if user.is_admin %}
+    <div class="mb-5 mt-4">
+        <h3 class="subsection-title"><i class="fas fa-user-tag me-2"></i>Chamados Atribuídos a Mim</h3>
+        {% if chamados_atribuidos %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle custom-table">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 5%;">#</th>
+                        <th scope="col" style="width: 15%;">Data Abertura</th>
+                        <th scope="col" style="width: 15%;">Município</th>
+                        <th scope="col" style="width: 20%;">Solicitante</th>
+                        <th scope="col" style="width: 20%;">Problema</th>
+                        <th scope="col" style="width: 15%;">Status</th>
+                        <th scope="col" style="width: 10%;" class="text-center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chamado in chamados_atribuidos %}
+                    <tr style="border-left: 5px solid var(--bs-{{ 'secondary' if chamado.status_e_final else chamado.cor_borda }});">
+                        <td>{{ chamado.id }}</td>
+                        <td>{{ chamado.timestamp }}</td>
+                        <td>{{ chamado.municipio }}</td>
+                        <td>{{ chamado.solicitante_email }}</td>
+                        <td>{{ chamado.tipo_problema_nome }}</td>
+                        <td>
+                            <span class="badge fs-6 w-100 {% if chamado.status_e_final and not chamado.status_permite_reabertura %}bg-secondary{% elif chamado.status_permite_reabertura %}bg-success{% else %}bg-{{ chamado.cor_borda }}{% endif %}">
+                                {{ chamado.status_nome }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#detalhes-{{ chamado.id }}" aria-expanded="false" aria-controls="detalhes-{{ chamado.id }}">
+                                Detalhes
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="7" class="p-0 border-0">
+                            <div class="collapse" id="detalhes-{{ chamado.id }}">
+                                <div class="details-panel">
+                                    <div class="row">
+                                        <div class="col-lg-8">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Observações do solicitante:</label>
+                                                <textarea readonly class="form-control" rows="4">{{ chamado.observacoes }}</textarea>
+                                            </div>
+                                            <div class="equipment-details">
+                                                <label class="form-label fw-bold d-block mb-2">Detalhes do Equipamento:</label>
+                                                <div class="row">
+                                                    <div class="col-md-6"><li><strong>Marca/Modelo:</strong> {{ chamado.equipamento_marca or 'N/A' }} {{ chamado.equipamento_modelo or '' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>IMEI:</strong> {{ chamado.smartphone_imei }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Nº de Série:</strong> {{ chamado.equipamento_ns or 'N/A' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Patrimônio:</strong> {{ chamado.equipamento_patrimonio or 'N/A' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Local de Uso:</strong> {{ chamado.equipamento_local or 'N/A' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Situação do Equip.:</strong> {{ chamado.equipamento_situacao or 'N/A' }}</li></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            {% if chamado.foto %}
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Foto Anexada:</label><br>
+                                                <a href="{{ url_for('display_image', filename=chamado.foto) }}" target="_blank">
+                                                    <img src="{{ url_for('display_image', filename=chamado.foto) }}" alt="Foto do Chamado" class="img-thumbnail">
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    {% if not chamado.status_e_final %}
+                                    <hr>
+                                    <form action="{{ url_for('update_chamado', chamado_id=chamado.id) }}" method="post">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="solucao-hist-{{ chamado.id }}" class="form-label fw-bold">Histórico de Soluções:</label>
+                                                <textarea readonly class="form-control bg-white" id="solucao-hist-{{ chamado.id }}" rows="8">{{ chamado.solucao or 'Nenhum histórico de solução.' }}</textarea>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="nova-solucao-{{ chamado.id }}" class="form-label fw-bold">Adicionar Nova Solução:</label>
+                                                <textarea name="nova_solucao" id="nova-solucao-{{ chamado.id }}" class="form-control" rows="8" placeholder="Digite a nova atualização aqui..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="row align-items-end">
+                                            <div class="col-md-6">
+                                                <label for="status-{{ chamado.id }}" class="form-label fw-bold">Alterar Status:</label>
+                                                <select name="status" id="status-{{ chamado.id }}" class="form-select" style="max-width: 300px;">
+                                                    {% for status in status_options %}
+                                                    <option value="{{ status.id }}" {% if status.id == chamado.status_id %}selected{% endif %}>{{ status.nome }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 text-end">
+                                                <button type="submit" class="btn btn-success mt-3">Salvar Alterações</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    {% else %}
+                                    <hr>
+                                    <label class="form-label fw-bold">Histórico Final de Soluções:</label>
+                                    <textarea readonly class="form-control bg-white" rows="10">{{ chamado.solucao or 'Nenhuma solução registrada.' }}</textarea>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-secondary">Nenhum chamado encontrado com os filtros selecionados.</div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h3 class="subsection-title"><i class="fas fa-globe-americas me-2"></i>Outros Chamados (Não atribuídos a mim)</h3>
+        {% if outros_chamados %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle custom-table">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 5%;">#</th>
+                        <th scope="col" style="width: 10%;">Data</th>
+                        <th scope="col" style="width: 15%;">Município</th>
+                        <th scope="col" style="width: 15%;">Solicitante</th>
+                        <th scope="col" style="width: 15%;">Problema</th>
+                        <th scope="col" style="width: 15%;">Responsável</th>
+                        <th scope="col" style="width: 15%;">Status</th>
+                        <th scope="col" style="width: 10%;" class="text-center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chamado in outros_chamados %}
+                    <tr style="border-left: 5px solid var(--bs-{{ 'secondary' if chamado.status_e_final else chamado.cor_borda }});">
+                        <td>{{ chamado.id }}</td>
+                        <td>{{ chamado.timestamp }}</td>
+                        <td>{{ chamado.municipio }}</td>
+                        <td>{{ chamado.solicitante_email }}</td>
+                        <td>{{ chamado.tipo_problema_nome }}</td>
+                        <td>
+                            {% if chamado.admin_responsavel_nome %}
+                                {{ chamado.admin_responsavel_nome }}
+                            {% else %}
+                                <span class="text-muted fst-italic">Aguardando...</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge fs-6 w-100 {% if chamado.status_e_final and not chamado.status_permite_reabertura %}bg-secondary{% elif chamado.status_permite_reabertura %}bg-success{% else %}bg-{{ chamado.cor_borda }}{% endif %}">
+                                {{ chamado.status_nome }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            {% if not chamado.admin_responsavel_id and chamado.status_e_inicial %}
+                            <form action="{{ url_for('capturar_chamado', chamado_id=chamado.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success" title="Capturar Chamado">
+                                    <i class="fas fa-hand-paper"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#geral-detalhes-{{ chamado.id }}" title="Ver Detalhes">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="8" class="p-0 border-0">
+                            <div class="collapse" id="geral-detalhes-{{ chamado.id }}">
+                                <div class="details-panel">
+                                    <div class="row">
+                                        <div class="col-lg-8">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Observações do solicitante:</label>
+                                                <textarea readonly class="form-control" rows="4">{{ chamado.observacoes }}</textarea>
+                                            </div>
+                                            <div class="equipment-details">
+                                                <label class="form-label fw-bold d-block mb-2">Detalhes do Equipamento:</label>
+                                                <div class="row">
+                                                    <div class="col-md-6"><li><strong>Marca/Modelo:</strong> {{ chamado.equipamento_marca or 'N/A' }} {{ chamado.equipamento_modelo or '' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>IMEI:</strong> {{ chamado.smartphone_imei }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Nº de Série:</strong> {{ chamado.equipamento_ns or 'N/A' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Patrimônio:</strong> {{ chamado.equipamento_patrimonio or 'N/A' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Local de Uso:</strong> {{ chamado.equipamento_local or 'N/A' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Situação do Equip.:</strong> {{ chamado.equipamento_situacao or 'N/A' }}</li></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            {% if chamado.foto %}
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Foto Anexada:</label><br>
+                                                <a href="{{ url_for('display_image', filename=chamado.foto) }}" target="_blank">
+                                                    <img src="{{ url_for('display_image', filename=chamado.foto) }}" alt="Foto do Chamado" class="img-thumbnail">
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <label class="form-label fw-bold">Histórico de Soluções:</label>
+                                    <textarea readonly class="form-control bg-white" rows="10">{{ chamado.solucao or 'Nenhum histórico de solução.' }}</textarea>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-secondary">Nenhum chamado encontrado com os filtros selecionados.</div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <div class="mt-4">
+        <h3 class="subsection-title"><i class="fas fa-ticket-alt me-2"></i>Meus Chamados Registrados</h3>
+        {% if chamados %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle custom-table">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Data Abertura</th>
+                        <th scope="col">Problema</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Responsável</th>
+                        <th scope="col" class="text-center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chamado in chamados %}
+                    <tr style="border-left: 5px solid var(--bs-{{ 'secondary' if chamado.status_e_final else chamado.cor_borda }});">
+                        <td>{{ chamado.id }}</td>
+                        <td>{{ chamado.timestamp }}</td>
+                        <td>{{ chamado.tipo_problema_nome }}</td>
+                        <td>
+                            <span class="badge fs-6 w-100 {% if chamado.status_e_final and not chamado.status_permite_reabertura %}bg-secondary{% elif chamado.status_permite_reabertura %}bg-success{% else %}bg-{{ chamado.cor_borda }}{% endif %}">
+                                {{ chamado.status_nome }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if chamado.admin_responsavel_nome %}
+                                {{ chamado.admin_responsavel_nome }}
+                            {% else %}
+                                <span class="text-muted fst-italic">Aguardando...</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if chamado.reabertura_disponivel %}
+                            <form action="{{ url_for('reabrir_chamado', chamado_id=chamado.id) }}" method="POST" class="d-inline-block mb-1">
+                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Tem certeza que deseja reabrir este chamado?')">
+                                    <i class="fas fa-history me-1"></i> Reabrir
+                                </button>
+                            </form>
+                            <div class="form-text" style="font-size: 0.75rem;">Expira em: {{ chamado.expira_em }}</div>
+                            {% endif %}
+
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#user-detalhes-{{ chamado.id }}" title="Ver Detalhes">
+                                <i class="fas fa-eye"></i> Detalhes
+                            </button>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td colspan="6" class="p-0 border-0">
+                            <div class="collapse" id="user-detalhes-{{ chamado.id }}">
+                                <div class="details-panel">
+                                    <div class="row">
+                                        <div class="col-lg-7">
+                                            <div class="equipment-details mb-3">
+                                                <label class="form-label fw-bold d-block mb-2">Detalhes do Equipamento:</label>
+                                                <div class="row">
+                                                    <div class="col-md-6"><li><strong>Marca/Modelo:</strong> {{ chamado.equipamento_marca or 'N/A' }} {{ chamado.equipamento_modelo or '' }}</li></div>
+                                                    <div class="col-md-6"><li><strong>IMEI:</strong> {{ chamado.smartphone_imei }}</li></div>
+                                                    <div class="col-md-6"><li><strong>Nº de Série:</strong> {{ chamado.equipamento_ns or 'N/A' }}</li></div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Observações (enviado por você):</label>
+                                                <textarea readonly class="form-control" rows="4">{{ chamado.observacoes }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-5">
+                                            {% if chamado.foto %}
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Foto Anexada:</label><br>
+                                                <a href="{{ url_for('display_image', filename=chamado.foto) }}" target="_blank">
+                                                    <img src="{{ url_for('display_image', filename=chamado.foto) }}" alt="Foto do Chamado" class="img-thumbnail">
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <label class="form-label fw-bold">Histórico de Soluções:</label>
+                                    <textarea readonly class="form-control bg-white" rows="8">{{ chamado.solucao or 'Nenhuma solução informada ainda.' }}</textarea>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info">Você ainda não abriu nenhum chamado ou nenhum corresponde ao filtro.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    body { background-color: #f0f2f5; }
+    .content-container {
+        background-color: #ffffff;
+        padding: 25px 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        max-width: 1400px;
+        margin: 20px auto;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+    .section-title { font-size: 1.75rem; color: #333; }
+    .subsection-title {
+        font-size: 1.25rem;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e9ecef;
+        color: #333;
+    }
+    .filter-form { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 10px; }
+    .filter-form .form-select { min-width: 200px; }
+    .custom-table thead tr th { background-color: #343a40; color: #fff; border-color: #495057; }
+    .table-hover tbody tr:hover { background-color: #e9ecef; }
+    .details-panel {
+        background-color: #e9edf2;
+        padding: 20px;
+        border-top: 1px solid #d0d6e0;
+    }
+    .details-panel label { color: #222; }
+    .details-panel textarea[readonly] {
+        background-color: #f3f5f8;
+        border-color: #d0d6e0;
+    }
+    textarea[readonly] { white-space: pre-wrap; }
+
+    .details-panel .equipment-details {
+        background-color: #f3f5f8;
+        border: 1px solid #d0d6e0;
+        border-radius: 5px;
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+    .details-panel .equipment-details ul, .details-panel .equipment-details li {
+        list-style-type: none;
+        padding-left: 0;
+        margin-bottom: 0;
+    }
+    .details-panel .equipment-details li {
+        padding: 3px 0;
+    }
+    .details-panel .img-thumbnail {
+        width: 100%;
+        max-width: 250px;
+        max-height: 200px;
+        object-fit: contain;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .textarea-erro {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const erroChamadoId = {{ erro_chamado_id|default('null') }};
+
+    if (erroChamadoId) {
+        const detalheComErro = document.getElementById(`detalhes-${erroChamadoId}`);
+        const textAreaComErro = document.getElementById(`nova-solucao-${erroChamadoId}`);
+
+        if (detalheComErro && textAreaComErro) {
+            const collapseInstance = new bootstrap.Collapse(detalheComErro, {
+                toggle: false
+            });
+            collapseInstance.show();
+
+            textAreaComErro.classList.add('textarea-erro');
+
+            textAreaComErro.focus();
+
+            textAreaComErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+});
+</script>
+{% endblock %}
