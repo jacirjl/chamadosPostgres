@@ -1,13 +1,15 @@
 import os
-import psycopg2
-import psycopg2.extras
 from datetime import datetime, timedelta
 from functools import wraps
+
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g, send_from_directory
+from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from werkzeug.exceptions import RequestEntityTooLarge
-
+load_dotenv()
 # --- Configuração da Aplicação ---
 app = Flask(__name__)
 app.secret_key = 'sua-chave-secreta-super-aleatoria'
@@ -16,10 +18,19 @@ app.instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'in
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 # SUBSTITUA PELA SUA URL DE CONEXÃO REAL
-DATABASE_URL = "postgresql://postgres:5451469@localhost:5432/chamados_db"
+# DATABASE_URL = "postgresql://postgres:5451469@localhost:5432/chamados_db"
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Se a URL do Render não incluir o parâmetro de SSL, adicione-o
+if DATABASE_URL and "?sslmode=require" not in DATABASE_URL:
+    DATABASE_URL += "?sslmode=require"
 
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
 DEFAULT_PASSWORD = '12345'
+
 
 os.makedirs(app.instance_path, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

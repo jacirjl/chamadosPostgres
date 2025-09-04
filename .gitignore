@@ -1,0 +1,10 @@
+# Ambientes Virtuais
+.venv/
+venv/
+
+# Arquivos de Senhas
+.env
+
+# Outros
+__pycache__/
+*.pyc
