@@ -3,28 +3,72 @@
 {% block title %}Redefinir Senha{% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <h1>Redefinir Senha</h1>
-    <p>Este parece ser seu primeiro acesso ou sua senha foi redefinida. Por favor, crie uma nova senha para continuar.</p>
+<div class="reset-container">
+    <div class="reset-card">
+        <h2>Redefinir Senha</h2>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% else %}
+                 <p class="info-text">Crie uma nova senha para acessar o sistema.</p>
+            {% endif %}
+        {% endwith %}
 
-    <form method="post">
-        <div class="form-group">
-            <label for="new_password">Nova Senha:</label>
-            <input type="password" id="new_password" name="new_password" required minlength="4">
-        </div>
-        <div class="form-group">
-            <label for="confirm_password">Confirme a Nova Senha:</label>
-            <input type="password" id="confirm_password" name="confirm_password" required minlength="4">
-        </div>
-        <button type="submit">Salvar Nova Senha</button>
-    </form>
+        <form method="post" id="reset-form" novalidate>
+            <div class="form-group">
+                <label for="new_password">Nova Senha:</label>
+                <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Mínimo de 6 caracteres">
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirme a Nova Senha:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Repita a senha">
+            </div>
+            <div id="password-feedback" class="feedback-message"></div>
+            <button type="submit" class="btn-submit">Salvar Nova Senha</button>
+        </form>
+    </div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('reset-form');
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const feedback = document.getElementById('password-feedback');
+        const submitButton = form.querySelector('.btn-submit');
+
+        function validatePasswords() {
+            // Desabilita o botão enquanto as senhas não forem válidas e coincidentes
+            if (newPassword.value.length >= 6 && newPassword.value === confirmPassword.value) {
+                feedback.textContent = '✅ As senhas coincidem!';
+                feedback.className = 'feedback-message success';
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = true;
+                if (confirmPassword.value && newPassword.value !== confirmPassword.value) {
+                    feedback.textContent = '❌ As senhas não coincidem!';
+                    feedback.className = 'feedback-message error';
+                } else if (newPassword.value && newPassword.value.length < 6) {
+                    feedback.textContent = 'A senha deve ter no mínimo 6 caracteres.';
+                    feedback.className = 'feedback-message error';
+                } else {
+                    feedback.textContent = '';
+                    feedback.className = 'feedback-message';
+                }
+            }
+        }
+
+        newPassword.addEventListener('input', validatePasswords);
+        confirmPassword.addEventListener('input', validatePasswords);
+
+        // Inicializa a validação para desabilitar o botão no carregamento da página
+        validatePasswords();
+    });
+</script>
 {% endblock %}

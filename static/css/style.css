@@ -1,0 +1,127 @@
+/* Container principal para centralizar o card na tela */
+.reset-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    background-color: #f4f7f6;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Card de redefinição de senha */
+.reset-card {
+    background-color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    border-top: 4px solid #007bff; /* Detalhe visual */
+}
+
+.reset-card h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.8em;
+}
+
+.reset-card .info-text {
+    margin-bottom: 25px;
+    color: #666;
+    font-size: 1em;
+}
+
+/* Estilo para os grupos do formulário (label + input) */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input[type="password"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+/* Botão de envio */
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.btn-submit:disabled {
+    background-color: #a0c9f7;
+    cursor: not-allowed;
+}
+
+
+/* Mensagens de feedback (para JavaScript) */
+.feedback-message {
+    font-size: 0.9em;
+    font-weight: 500;
+    margin-top: -10px;
+    margin-bottom: 15px;
+    height: 20px;
+    text-align: left;
+}
+
+.feedback-message.error {
+    color: #dc3545; /* Vermelho */
+}
+
+.feedback-message.success {
+    color: #28a745; /* Verde */
+}
+
+/* Estilo para as mensagens flash do Flask (exemplo) */
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
